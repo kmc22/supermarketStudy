@@ -4,7 +4,7 @@ library(survey)
 library(svrep)
 library(srvyr)
 
-oleo = 0
+oleo = 1
 
 if (oleo == 0) {
   append = "nooleo"
@@ -113,6 +113,17 @@ unmatched<-ss %>%
 
 # write.csv(unmatched,"output/unmatched subcategories from product list.csv",row.names = FALSE)
 
+# categorize unspecified as oils
+ss$ID <- seq.int(nrow(ss))
+
+ss_u <- ss %>%
+  mutate(across(Palm:Cacao, ~if_else(Unspecified == 1, 1, .))) %>%
+  select(ID,Palm:Cacao) %>%
+  rename_with(~paste0("u_",.),Palm:Cacao)
+
+ss<-left_join(ss,ss_u,by = "ID") %>%
+  select(-ID)
+
 # bootstrap
 if (oleo == 0) {
   ss <- ss %>%
@@ -128,28 +139,28 @@ mydesign <- ss %>%
 mydesign_bootstrap <- mydesign %>%
   as_bootstrap_design(replicates = 1000)
 
-myresult <- svyby(~Palm+Sunflower+Soya+Rapeseed+Coconut+Peanut+Olive+Maize+Sesame+Shea+Cacao+Unspecified+Any, # variable to pass to function
+myresult <- svyby(~Palm+Sunflower+Soya+Rapeseed+Coconut+Peanut+Olive+Maize+Sesame+Shea+Cacao+Unspecified+Any+u_Palm+u_Sunflower+u_Soya+u_Rapeseed+u_Coconut+u_Peanut+u_Olive+u_Maize+u_Sesame+u_Shea+u_Cacao, # variable to pass to function
                   by = ~all,  # grouping
                   design = mydesign_bootstrap, # design object
                   vartype = "ci", # report variation as confidence interval
                   FUN = svymean,# specify function from survey package, mean here
                   na.rm = TRUE)
 
-myresult_s <- svyby(~Palm+Sunflower+Soya+Rapeseed+Coconut+Peanut+Olive+Maize+Sesame+Shea+Cacao+Unspecified+Any, # variable to pass to function
+myresult_s <- svyby(~Palm+Sunflower+Soya+Rapeseed+Coconut+Peanut+Olive+Maize+Sesame+Shea+Cacao+Unspecified+Any+u_Palm+u_Sunflower+u_Soya+u_Rapeseed+u_Coconut+u_Peanut+u_Olive+u_Maize+u_Sesame+u_Shea+u_Cacao, # variable to pass to function
                     by = ~supermarket,  # grouping
                     design = mydesign_bootstrap, # design object
                     vartype = "ci", # report variation as confidence interval
                     FUN = svymean,# specify function from survey package, mean here
                     na.rm = TRUE)
 
-myresult_c <- svyby(~Palm+Sunflower+Soya+Rapeseed+Coconut+Peanut+Olive+Maize+Sesame+Shea+Cacao+Unspecified+Any, # variable to pass to function
+myresult_c <- svyby(~Palm+Sunflower+Soya+Rapeseed+Coconut+Peanut+Olive+Maize+Sesame+Shea+Cacao+Unspecified+Any+u_Palm+u_Sunflower+u_Soya+u_Rapeseed+u_Coconut+u_Peanut+u_Olive+u_Maize+u_Sesame+u_Shea+u_Cacao, # variable to pass to function
                     by = ~supercategory,  # grouping
                     design = mydesign_bootstrap, # design object
                     vartype = "ci", # report variation as confidence interval
                     FUN = svymean,# specify function from survey package, mean here
                     na.rm = TRUE)
 
-myresult_sc <- svyby(~Palm+Sunflower+Soya+Rapeseed+Coconut+Peanut+Olive+Maize+Sesame+Shea+Cacao+Unspecified+Any, # variable to pass to function
+myresult_sc <- svyby(~Palm+Sunflower+Soya+Rapeseed+Coconut+Peanut+Olive+Maize+Sesame+Shea+Cacao+Unspecified+Any+u_Palm+u_Sunflower+u_Soya+u_Rapeseed+u_Coconut+u_Peanut+u_Olive+u_Maize+u_Sesame+u_Shea+u_Cacao, # variable to pass to function
                      by = ~supermarket + supercategory,  # grouping
                      design = mydesign_bootstrap, # design object
                      vartype = "ci", # report variation as confidence interval
@@ -165,7 +176,7 @@ myresult_corrected <- oil_totals %>%
   mutate(all = "all") %>%
   left_join(myresult) %>%
   mutate(other = 0) %>%
-  summarise(across(Palm:ci_u.Any, ~ weighted.mean(c(.x,0),c(weight_sampled,weight_unsampled)))) %>%
+  summarise(across(Palm:ci_u.u_Cacao, ~ weighted.mean(c(.x,0),c(weight_sampled,weight_unsampled))))%>%
   mutate(all = "all")
 
 myresult_s_corrected <- oil_totals %>%
@@ -177,7 +188,7 @@ myresult_s_corrected <- oil_totals %>%
   left_join(myresult_s) %>%
   mutate(other = 0) %>%
   group_by(supermarket) %>%
-  summarise(across(Palm:ci_u.Any, ~ weighted.mean(c(.x,0),c(weight_sampled,weight_unsampled)))) %>%
+  summarise(across(Palm:ci_u.u_Cacao, ~ weighted.mean(c(.x,0),c(weight_sampled,weight_unsampled)))) %>%
   mutate(all = "all")
 
 myresult_c_corrected <- oil_totals %>%
@@ -189,7 +200,7 @@ myresult_c_corrected <- oil_totals %>%
   left_join(myresult_c) %>%
   mutate(other = 0) %>%
   group_by(supercategory) %>%
-  summarise(across(Palm:ci_u.Any, ~ weighted.mean(c(.x,0),c(weight_sampled,weight_unsampled)))) %>%
+  summarise(across(Palm:ci_u.u_Cacao, ~ weighted.mean(c(.x,0),c(weight_sampled,weight_unsampled)))) %>%
   mutate(all = "all")
 
 myresult_sc_corrected <- oil_totals %>%
@@ -198,11 +209,11 @@ myresult_sc_corrected <- oil_totals %>%
   left_join(myresult_sc) %>%
   mutate(other = 0) %>%
   group_by(supermarket,supercategory) %>%
-  summarise(across(Palm:ci_u.Any, ~ weighted.mean(c(.x,0),c(weight_sampled,weight_unsampled)))) %>%
+  summarise(across(Palm:ci_u.u_Cacao, ~ weighted.mean(c(.x,0),c(weight_sampled,weight_unsampled)))) %>%
   mutate(all = "all")
 
 myresult_corrected_long<-myresult_corrected %>%
-  pivot_longer(cols = Palm:ci_u.Any,
+  pivot_longer(cols = Palm:ci_u.u_Cacao,
                names_to = "oil",
                values_to = "proportion") %>%
   mutate(metric = if_else(str_detect(oil, "ci_l"), "ci_l", 
@@ -211,11 +222,13 @@ myresult_corrected_long<-myresult_corrected %>%
          oil = str_remove_all(oil, "ci_u.")) %>%
   pivot_wider(names_from = metric,
               values_from = proportion) %>% 
+  mutate(unspecified = if_else(str_detect(oil,"u_"),"add_unspecified","measured")) %>%
+  mutate(oil = str_remove_all(oil,"u_")) %>%
   dplyr::rename("supermarket" = "all") %>%
   mutate(supercategory = "all")
 
 myresult_s_corrected_long<-myresult_s_corrected %>%
-  pivot_longer(cols = Palm:ci_u.Any,
+  pivot_longer(cols = Palm:ci_u.u_Cacao,
                names_to = "oil",
                values_to = "proportion") %>%
   mutate(metric = if_else(str_detect(oil, "ci_l"), "ci_l", 
@@ -224,10 +237,12 @@ myresult_s_corrected_long<-myresult_s_corrected %>%
          oil = str_remove_all(oil, "ci_u.")) %>%
   pivot_wider(names_from = metric,
               values_from = proportion) %>% 
+  mutate(unspecified = if_else(str_detect(oil,"u_"),"add_unspecified","measured")) %>%
+  mutate(oil = str_remove_all(oil,"u_")) %>%
   mutate(supercategory = "all")
 
 myresult_c_corrected_long<-myresult_c_corrected %>%
-  pivot_longer(cols = Palm:ci_u.Any,
+  pivot_longer(cols = Palm:ci_u.u_Cacao,
                names_to = "oil",
                values_to = "proportion") %>%
   mutate(metric = if_else(str_detect(oil, "ci_l"), "ci_l", 
@@ -236,10 +251,12 @@ myresult_c_corrected_long<-myresult_c_corrected %>%
          oil = str_remove_all(oil, "ci_u.")) %>%
   pivot_wider(names_from = metric,
               values_from = proportion) %>% 
+  mutate(unspecified = if_else(str_detect(oil,"u_"),"add_unspecified","measured")) %>%
+  mutate(oil = str_remove_all(oil,"u_")) %>%
   mutate(supermarket = "all")
 
 myresult_sc_corrected_long<-myresult_sc_corrected %>%
-  pivot_longer(cols = Palm:ci_u.Any,
+  pivot_longer(cols = Palm:ci_u.u_Cacao,
                names_to = "oil",
                values_to = "proportion") %>%
   mutate(metric = if_else(str_detect(oil, "ci_l"), "ci_l", 
@@ -247,10 +264,12 @@ myresult_sc_corrected_long<-myresult_sc_corrected %>%
   mutate(oil = str_remove_all(oil, "ci_l."),
          oil = str_remove_all(oil, "ci_u.")) %>%
   pivot_wider(names_from = metric,
-              values_from = proportion)
+              values_from = proportion) %>%
+  mutate(unspecified = if_else(str_detect(oil,"u_"),"add_unspecified","measured")) %>%
+  mutate(oil = str_remove_all(oil,"u_"))
 
-myresult_long<-myresult %>%
-  pivot_longer(cols = Palm:ci_u.Any,
+myresult_long <- myresult %>%
+  pivot_longer(cols = Palm:ci_u.u_Cacao,
                names_to = "oil",
                values_to = "proportion") %>%
   mutate(metric = if_else(str_detect(oil, "ci_l"), "ci_l", 
@@ -259,11 +278,13 @@ myresult_long<-myresult %>%
          oil = str_remove_all(oil, "ci_u.")) %>%
   pivot_wider(names_from = metric,
               values_from = proportion) %>% 
+  mutate(unspecified = if_else(str_detect(oil,"u_"),"add_unspecified","measured")) %>%
+  mutate(oil = str_remove_all(oil,"u_")) %>%
   dplyr::rename("supermarket" = "all") %>%
   mutate(supercategory = "all")
 
 myresult_s_long<-myresult_s %>%
-  pivot_longer(cols = Palm:ci_u.Any,
+  pivot_longer(cols = Palm:ci_u.u_Cacao,
                names_to = "oil",
                values_to = "proportion") %>%
   mutate(metric = if_else(str_detect(oil, "ci_l"), "ci_l", 
@@ -272,10 +293,12 @@ myresult_s_long<-myresult_s %>%
          oil = str_remove_all(oil, "ci_u.")) %>%
   pivot_wider(names_from = metric,
               values_from = proportion)%>%
+  mutate(unspecified = if_else(str_detect(oil,"u_"),"add_unspecified","measured")) %>%
+  mutate(oil = str_remove_all(oil,"u_")) %>%
   mutate(supercategory = "all")
 
 myresult_c_long<-myresult_c %>%
-  pivot_longer(cols = Palm:ci_u.Any,
+  pivot_longer(cols = Palm:ci_u.u_Cacao,
                names_to = "oil",
                values_to = "proportion") %>%
   mutate(metric = if_else(str_detect(oil, "ci_l"), "ci_l", 
@@ -284,10 +307,12 @@ myresult_c_long<-myresult_c %>%
          oil = str_remove_all(oil, "ci_u.")) %>%
   pivot_wider(names_from = metric,
               values_from = proportion)%>%
+  mutate(unspecified = if_else(str_detect(oil,"u_"),"add_unspecified","measured")) %>%
+  mutate(oil = str_remove_all(oil,"u_")) %>%
   mutate(supermarket = "all")
 
 myresult_sc_long<-myresult_sc %>%
-  pivot_longer(cols = Palm:ci_u.Any,
+  pivot_longer(cols = Palm:ci_u.u_Cacao,
                names_to = "oil",
                values_to = "proportion") %>%
   mutate(metric = if_else(str_detect(oil, "ci_l"), "ci_l", 
@@ -295,7 +320,10 @@ myresult_sc_long<-myresult_sc %>%
   mutate(oil = str_remove_all(oil, "ci_l."),
          oil = str_remove_all(oil, "ci_u.")) %>%
   pivot_wider(names_from = metric,
-              values_from = proportion)
+              values_from = proportion) %>%
+  mutate(unspecified = if_else(str_detect(oil,"u_"),"add_unspecified","measured")) %>%
+  mutate(oil = str_remove_all(oil,"u_"))
+
 
 results_long <- bind_rows(myresult_long,myresult_s_long,myresult_c_long,myresult_sc_long)
 results_corrected_long <- bind_rows(myresult_corrected_long,myresult_s_corrected_long,myresult_c_corrected_long,myresult_sc_corrected_long)
@@ -306,6 +334,7 @@ write.csv(results_corrected_long,paste("output/supermarketStudyBootstrap_correct
 # plot CIs
 
 myresult_corrected_long %>%
+  filter(unspecified == "measured") %>%
   ggplot(aes(x = oil, y = mean*100)) +
   #geom_hline(yintercept=50)+
   geom_point() +
@@ -314,14 +343,13 @@ myresult_corrected_long %>%
                 width=.25,) +
   ylab("% of products with vegetable oil")+
   theme_bw()+
-  theme(legend.position="none",
-        axis.title.y = element_blank())+
-  #ggtitle("corrected for unsampled categories, overall")+
+  theme(axis.title.y = element_blank(),legend.position="none")+
   scale_x_discrete(limits=rev)
 
 ggsave(paste("figures/corrected_overall_", append, ".png",sep = ""),width = 4, height = 4)
 
 myresult_s_corrected_long %>%
+  filter(unspecified == "measured") %>%
   ggplot(aes(x = oil, y = mean*100)) +
   #geom_hline(yintercept=50)+
   geom_point() +
@@ -331,15 +359,14 @@ myresult_s_corrected_long %>%
                 width=.25,) +
   ylab("% of products with vegetable oil")+
   theme_bw()+
-  theme(legend.position="none",
-        axis.title.y = element_blank())+
-  #ggtitle("corrected for unsampled categories, by supermarket")+
+  theme(axis.title.y = element_blank(),legend.position="none")+
   scale_x_discrete(limits=rev)
 
 ggsave(paste("figures/corrected_supermarket_", append, ".png",sep = ""),width = 5, height = 4)
 
 myresult_sc_corrected_long %>%
-  ggplot(aes(x = oil, y = mean*100,)) +
+  filter(unspecified == "measured") %>%
+  ggplot(aes(x = oil, y = mean*100)) +
   #geom_hline(yintercept=50)+
   geom_point() +
   coord_flip() +
@@ -348,13 +375,13 @@ myresult_sc_corrected_long %>%
                 width=.25,) +
   ylab("% of products with vegetable oil")+
   theme_bw()+
-  theme(legend.position="none",
-        axis.title.y = element_blank())+
+  theme(axis.title.y = element_blank(),legend.position="none")+
   scale_x_discrete(limits=rev)
 
 ggsave(paste("figures/corrected_supermarket_supercategory_", append, ".png",sep = ""),width = 6, height = 4)
 
 myresult_c_corrected_long %>%
+  filter(unspecified == "measured") %>%
   ggplot(aes(x = oil, y = mean*100)) +
   #geom_hline(yintercept=50)+
   geom_point() +
@@ -364,11 +391,74 @@ myresult_c_corrected_long %>%
                 width=.25,) +
   ylab("% of products with vegetable oil")+
   theme_bw()+
-  theme(legend.position="none",
-        axis.title.y = element_blank())+
+  theme(axis.title.y = element_blank(),legend.position="none")+
   scale_x_discrete(limits=rev)
 
 ggsave(paste("figures/corrected_supercategory_", append, ".png",sep = ""),width = 6, height = 4)
+
+myresult_corrected_long %>%
+  filter(unspecified == "add_unspecified") %>%
+  ggplot(aes(x = oil, y = mean*100)) +
+  #geom_hline(yintercept=50)+
+  geom_point() +
+  coord_flip() +
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),    
+                width=.25,) +
+  ylab("% of products with vegetable oil")+
+  theme_bw()+
+  theme(axis.title.y = element_blank())+
+  scale_x_discrete(limits=rev)
+
+ggsave(paste("figures/corrected_overall_unspecified_", append, ".png",sep = ""),width = 4, height = 4)
+
+myresult_s_corrected_long %>%
+  filter(unspecified == "add_unspecified") %>%
+  ggplot(aes(x = oil, y = mean*100)) +
+  #geom_hline(yintercept=50)+
+  geom_point() +
+  coord_flip() +
+  facet_grid(. ~ supermarket) +
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),    
+                width=.25,) +
+  ylab("% of products with vegetable oil")+
+  theme_bw()+
+  theme(axis.title.y = element_blank())+
+  #ggtitle("corrected for unsampled categories, by supermarket")+
+  scale_x_discrete(limits=rev)
+
+ggsave(paste("figures/corrected_supermarket_unspecified_", append, ".png",sep = ""),width = 5, height = 4)
+
+myresult_sc_corrected_long %>%
+  filter(unspecified == "add_unspecified") %>%
+  ggplot(aes(x = oil, y = mean*100)) +
+  #geom_hline(yintercept=50)+
+  geom_point() +
+  coord_flip() +
+  facet_grid(supermarket ~ supercategory) +
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),    
+                width=.25,) +
+  ylab("% of products with vegetable oil")+
+  theme_bw()+
+  theme(axis.title.y = element_blank())+
+  scale_x_discrete(limits=rev)
+
+ggsave(paste("figures/corrected_supermarket_supercategory_unspecified_", append, ".png",sep = ""),width = 6, height = 4)
+
+myresult_c_corrected_long %>%
+  filter(unspecified == "add_unspecified") %>%
+  ggplot(aes(x = oil, y = mean*100)) +
+  #geom_hline(yintercept=50)+
+  geom_point() +
+  coord_flip() +
+  facet_grid(. ~ supercategory) +
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),    
+                width=.25,) +
+  ylab("% of products with vegetable oil")+
+  theme_bw()+
+  theme(axis.title.y = element_blank())+
+  scale_x_discrete(limits=rev)
+
+ggsave(paste("figures/corrected_supercategory_unspecified_", append, ".png",sep = ""),width = 6, height = 4)
 
 citation()
 
