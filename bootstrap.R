@@ -1,8 +1,10 @@
-library(readxl)
-library(tidyverse)
-library(survey)
-library(svrep)
-library(srvyr)
+# LOAD REQUIRED PACKAGES
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse,
+               readxl,
+               survey,
+               svrep,
+               srvyr)
 
 oleo = 1
 
@@ -22,15 +24,15 @@ category_totals <- category_totals %>%
                 "products_sampled" = "No. Sampled Products",
                 "exclusion_reason" = "Reason for Exclusion (if applicable)") %>%
   mutate(subcategory = replace(subcategory, subcategory == "N/a", category[subcategory == "N/a"])) %>%
-  mutate(products_sampled = as.numeric(products_sampled))
+  select(-products_sampled)
 
-ah<- read_excel("input/products/Supermarket Study (Update 03_02_25).xlsx", sheet = "Albert Heijn") %>%
+ah<- read_excel("input/products/Supermarket Study (11_02_25 - duplicates restored).xlsx", sheet = "Albert Heijn") %>%
   mutate(supermarket = "Albert Heijn") %>%
   filter(!is.na(`Product Name`))
-sb<- read_excel("input/products/Supermarket Study (Update 03_02_25).xlsx", sheet = "Sainsburys") %>%
+sb<- read_excel("input/products/Supermarket Study (11_02_25 - duplicates restored).xlsx", sheet = "Sainsburys") %>%
   mutate(supermarket = "Sainsburys") %>%
   filter(!is.na(`Product Name`))
-ww<- read_excel("input/products/Supermarket Study (Update 03_02_25).xlsx", sheet = "Woolworths") %>%
+ww<- read_excel("input/products/Supermarket Study (11_02_25 - duplicates restored).xlsx", sheet = "Woolworths") %>%
   mutate(supermarket = "Woolworths") %>%
   filter(!is.na(`Product Name`))
 
@@ -57,17 +59,27 @@ ss <- bind_rows(ah,sb,ww) %>%
   unite(subcategoryUnique,c("subcategory","supermarket"),remove = FALSE) %>%
   mutate(all = "all")
 
-# remove duplicate products
-ss<-ss %>%
-  distinct(supermarket,product,.keep_all=TRUE)
+# join category totals
+ss <- left_join(ss,category_totals,by = join_by(supermarket,category,subcategory)) %>%
+  select(-exclusion_reason)
 
-# correct for oleochemical exclusion (or not)
-oleochemicals <- ss %>%
+# remove unmatched
+unmatched<-ss %>%
+  filter(is.na(products_total)) %>%
+  select(supermarket,category,subcategory) %>%
+  distinct()
+
+# write.csv(unmatched,"output/unmatched subcategories from product list.csv",row.names = FALSE)
+
+ss <- ss %>% filter(!is.na(products_total))
+
+# count oleochemicals sampled
+ss %>%
   filter(Oleochemicals == 1) %>%
-  group_by(supermarket,category,subcategory) %>%
   count() %>%
   rename("samp_oleo" = "n")
 
+# get total sample size
 sampled <- ss %>%
   group_by(supermarket,category,subcategory) %>%
   count() %>%
@@ -103,15 +115,6 @@ oil_totals <- category_totals %>%
   summarise(products_categories_sampled = sum(categories_sampled),
             products_categories_all = sum(categories_all)) %>%
   ungroup()
-
-ss <- left_join(ss,category_totals,by = join_by(supermarket,category,subcategory))
-
-unmatched<-ss %>%
-  filter(is.na(products_sampled)) %>%
-  select(supermarket,category,subcategory) %>%
-  distinct()
-
-# write.csv(unmatched,"output/unmatched subcategories from product list.csv",row.names = FALSE)
 
 # categorize unspecified as oils
 ss$ID <- seq.int(nrow(ss))
@@ -328,137 +331,5 @@ myresult_sc_long<-myresult_sc %>%
 results_long <- bind_rows(myresult_long,myresult_s_long,myresult_c_long,myresult_sc_long)
 results_corrected_long <- bind_rows(myresult_corrected_long,myresult_s_corrected_long,myresult_c_corrected_long,myresult_sc_corrected_long)
 
-write.csv(results_long,paste("output/supermarketStudyBootstrap_uncorrected_", append, ".csv",sep = ""),row.names = FALSE)
-write.csv(results_corrected_long,paste("output/supermarketStudyBootstrap_corrected_", append, ".csv",sep = ""),row.names = FALSE)
-  
-# plot CIs
-
-myresult_corrected_long %>%
-  filter(unspecified == "measured") %>%
-  ggplot(aes(x = oil, y = mean*100)) +
-  #geom_hline(yintercept=50)+
-  geom_point() +
-  coord_flip() +
-  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),    
-                width=.25,) +
-  ylab("% of products with vegetable oil")+
-  theme_bw()+
-  theme(axis.title.y = element_blank(),legend.position="none")+
-  scale_x_discrete(limits=rev)
-
-ggsave(paste("figures/corrected_overall_", append, ".png",sep = ""),width = 4, height = 4)
-
-myresult_s_corrected_long %>%
-  filter(unspecified == "measured") %>%
-  ggplot(aes(x = oil, y = mean*100)) +
-  #geom_hline(yintercept=50)+
-  geom_point() +
-  coord_flip() +
-  facet_grid(. ~ supermarket) +
-  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),    
-                width=.25,) +
-  ylab("% of products with vegetable oil")+
-  theme_bw()+
-  theme(axis.title.y = element_blank(),legend.position="none")+
-  scale_x_discrete(limits=rev)
-
-ggsave(paste("figures/corrected_supermarket_", append, ".png",sep = ""),width = 5, height = 4)
-
-myresult_sc_corrected_long %>%
-  filter(unspecified == "measured") %>%
-  ggplot(aes(x = oil, y = mean*100)) +
-  #geom_hline(yintercept=50)+
-  geom_point() +
-  coord_flip() +
-  facet_grid(supermarket ~ supercategory) +
-  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),    
-                width=.25,) +
-  ylab("% of products with vegetable oil")+
-  theme_bw()+
-  theme(axis.title.y = element_blank(),legend.position="none")+
-  scale_x_discrete(limits=rev)
-
-ggsave(paste("figures/corrected_supermarket_supercategory_", append, ".png",sep = ""),width = 6, height = 4)
-
-myresult_c_corrected_long %>%
-  filter(unspecified == "measured") %>%
-  ggplot(aes(x = oil, y = mean*100)) +
-  #geom_hline(yintercept=50)+
-  geom_point() +
-  coord_flip() +
-  facet_grid(. ~ supercategory) +
-  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),    
-                width=.25,) +
-  ylab("% of products with vegetable oil")+
-  theme_bw()+
-  theme(axis.title.y = element_blank(),legend.position="none")+
-  scale_x_discrete(limits=rev)
-
-ggsave(paste("figures/corrected_supercategory_", append, ".png",sep = ""),width = 6, height = 4)
-
-myresult_corrected_long %>%
-  filter(unspecified == "add_unspecified") %>%
-  ggplot(aes(x = oil, y = mean*100)) +
-  #geom_hline(yintercept=50)+
-  geom_point() +
-  coord_flip() +
-  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),    
-                width=.25,) +
-  ylab("% of products with vegetable oil")+
-  theme_bw()+
-  theme(axis.title.y = element_blank())+
-  scale_x_discrete(limits=rev)
-
-ggsave(paste("figures/corrected_overall_unspecified_", append, ".png",sep = ""),width = 4, height = 4)
-
-myresult_s_corrected_long %>%
-  filter(unspecified == "add_unspecified") %>%
-  ggplot(aes(x = oil, y = mean*100)) +
-  #geom_hline(yintercept=50)+
-  geom_point() +
-  coord_flip() +
-  facet_grid(. ~ supermarket) +
-  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),    
-                width=.25,) +
-  ylab("% of products with vegetable oil")+
-  theme_bw()+
-  theme(axis.title.y = element_blank())+
-  #ggtitle("corrected for unsampled categories, by supermarket")+
-  scale_x_discrete(limits=rev)
-
-ggsave(paste("figures/corrected_supermarket_unspecified_", append, ".png",sep = ""),width = 5, height = 4)
-
-myresult_sc_corrected_long %>%
-  filter(unspecified == "add_unspecified") %>%
-  ggplot(aes(x = oil, y = mean*100)) +
-  #geom_hline(yintercept=50)+
-  geom_point() +
-  coord_flip() +
-  facet_grid(supermarket ~ supercategory) +
-  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),    
-                width=.25,) +
-  ylab("% of products with vegetable oil")+
-  theme_bw()+
-  theme(axis.title.y = element_blank())+
-  scale_x_discrete(limits=rev)
-
-ggsave(paste("figures/corrected_supermarket_supercategory_unspecified_", append, ".png",sep = ""),width = 6, height = 4)
-
-myresult_c_corrected_long %>%
-  filter(unspecified == "add_unspecified") %>%
-  ggplot(aes(x = oil, y = mean*100)) +
-  #geom_hline(yintercept=50)+
-  geom_point() +
-  coord_flip() +
-  facet_grid(. ~ supercategory) +
-  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),    
-                width=.25,) +
-  ylab("% of products with vegetable oil")+
-  theme_bw()+
-  theme(axis.title.y = element_blank())+
-  scale_x_discrete(limits=rev)
-
-ggsave(paste("figures/corrected_supercategory_unspecified_", append, ".png",sep = ""),width = 6, height = 4)
-
-citation()
-
+write.csv(results_long, paste("output/supermarketStudyBootstrap_uncorrected_", append, ".csv",sep = ""),row.names = FALSE)
+write.csv(results_corrected_long, paste("output/supermarketStudyBootstrap_corrected_", append, ".csv",sep = ""),row.names = FALSE)
