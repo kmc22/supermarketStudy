@@ -2,9 +2,7 @@
 # Author: Kimberly Carlson
 
 # load required packages
-if (!require("pacman")) install.packages("pacman")
-
-pacman::p_install_version("tidyverse","2.0.0")
+if (!require("pacman")) install.packages("pacman", type="binary", dependencies = TRUE)
 
 pacman::p_load(tidyverse)
 

@@ -3,13 +3,7 @@
 # Author: Kimberly Carlson
 
 # load required packages
-if (!require("pacman")) install.packages("pacman")
-
-pacman::p_install_version("tidyverse","2.0.0")
-pacman::p_install_version("readxl","1.4.5")
-pacman::p_install_version("survey","4.4-2")
-pacman::p_install_version("svrep","0.8.0")
-pacman::p_install_version("srvyr","1.3.0")
+if (!require("pacman")) install.packages("pacman", type="binary")
 
 pacman::p_load(tidyverse,
                readxl,
