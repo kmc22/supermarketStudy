@@ -20,7 +20,7 @@ if (oleo == 0) {
 
 
 # load supermarket category total data
-category_totals <- read_excel("input/products/Inclusion_Exclusion  (10_01_25) input.xlsx")
+category_totals <- read_excel("input/Inclusion_Exclusion  (10_01_25) input.xlsx")
 
 category_totals <- category_totals %>%
   dplyr::rename("supermarket" = "Supermarket",
@@ -33,13 +33,13 @@ category_totals <- category_totals %>%
   select(-products_sampled)
 
 # load individual product data
-ah <- read_excel("input/products/Supermarket Study (11_02_25 - duplicates restored).xlsx", sheet = "Albert Heijn") %>%
+ah <- read_excel("input/Supermarket Study (11_02_25 - duplicates restored).xlsx", sheet = "Albert Heijn") %>%
   mutate(supermarket = "Albert Heijn") %>%
   filter(!is.na(`Product Name`))
-sb <- read_excel("input/products/Supermarket Study (11_02_25 - duplicates restored).xlsx", sheet = "Sainsburys") %>%
+sb <- read_excel("input/Supermarket Study (11_02_25 - duplicates restored).xlsx", sheet = "Sainsburys") %>%
   mutate(supermarket = "Sainsburys") %>%
   filter(!is.na(`Product Name`))
-ww <- read_excel("input/products/Supermarket Study (11_02_25 - duplicates restored).xlsx", sheet = "Woolworths") %>%
+ww <- read_excel("input/Supermarket Study (11_02_25 - duplicates restored).xlsx", sheet = "Woolworths") %>%
   mutate(supermarket = "Woolworths") %>%
   filter(!is.na(`Product Name`))
 

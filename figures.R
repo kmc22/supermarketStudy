@@ -23,7 +23,6 @@ results_corrected_long %>%
   filter(supermarket == "all") %>%
   filter(unspecified == "measured") %>%
   ggplot(aes(x = reorder(oil,-mean), y = mean*100)) +
-  #geom_hline(yintercept=50)+
   geom_point() +
   coord_flip() +
   geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),    
