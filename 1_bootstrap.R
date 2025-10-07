@@ -3,7 +3,7 @@
 # Author: Kimberly Carlson
 
 # load required packages
-if (!require("pacman")) install.packages("pacman", type="binary")
+if (!require("pacman")) install.packages("pacman", type="binary", dependencies = TRUE)
 
 pacman::p_load(tidyverse,
                readxl,
