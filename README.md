@@ -14,6 +14,6 @@ All the input data are in the "input" folder. All files written by the code are 
 
 # Code
 fao analysis.R - downloads and analyzes data from FAOStat  
-Please run the following .R files in the order specified by the numeric file names since 2 is dependent on 1:
+Please run the following .R files in the order specified by the numeric file names since 2 is dependent on 1:  
 1_bootstrap.R - undertakes the bootstrap analysis  
 2_figures.R - produces the mean and confidence interval figures  
