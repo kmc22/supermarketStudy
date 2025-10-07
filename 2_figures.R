@@ -3,6 +3,9 @@
 
 # load required packages
 if (!require("pacman")) install.packages("pacman")
+
+pacman::p_install_version("tidyverse","2.0.0")
+
 pacman::p_load(tidyverse)
 
 # set whether oleochemcials are included in the analysis (oleo = 1), or not (oleo = 0)

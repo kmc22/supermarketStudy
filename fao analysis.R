@@ -4,6 +4,10 @@
 
 # load required packages
 if (!require("pacman")) install.packages("pacman")
+
+pacman::p_install_version("tidyverse","2.0.0")
+pacman::p_install_version("FAOSTAT","2.4.0")
+
 pacman::p_load(tidyverse,
                FAOSTAT)
 
