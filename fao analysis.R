@@ -9,18 +9,19 @@ pacman::p_load(tidyverse,
                FAOSTAT)
 
 # pull data from FAOStat and save to disk
-#fbs_new_bulk <- get_faostat_bulk(code = "FBS", data_folder = "output")
-#fbs_old_bulk <- get_faostat_bulk(code = "FBSH", data_folder = "output")
-#prod_bulk <- get_faostat_bulk(code = "QCL", data_folder = "output")
+fbs_new_bulk <- get_faostat_bulk(code = "FBS", data_folder = "output") # food balance sheets
+fbs_old_bulk <- get_faostat_bulk(code = "FBSH", data_folder = "output") # food balance sheets
+prod_bulk <- get_faostat_bulk(code = "QCL", data_folder = "output") # crop and livestock production
 
+# optionally save to disk
 #saveRDS(fbs_new_bulk, "output/fbs_all_data.rds")
 #saveRDS(fbs_old_bulk, "output/fbsh_all_data.rds")
 #saveRDS(prod_bulk, "output/qcl_all_data.rds")
 
 # if data have already been saved to disk, read them in
-fbs_new_bulk <- readRDS("output/faostat/fbs_all_data.rds")
-fbs_old_bulk <- readRDS("output/faostat/fbsh_all_data.rds")
-prod_bulk <- readRDS("output/faostat/qcl_all_data.rds")
+#fbs_new_bulk <- readRDS("output/fbs_all_data.rds")
+#fbs_old_bulk <- readRDS("output/fbsh_all_data.rds")
+#prod_bulk <- readRDS("output/qcl_all_data.rds")
 
 # get production data from 2000-2022 at a global level for oil crops
 production <- prod_bulk %>%
