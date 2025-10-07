@@ -1,20 +1,27 @@
-# LOAD REQUIRED PACKAGES
+# This script pulls data from faostat, filters it to regions and crops of interest,
+# and then summarises temporal trends including visualizing them
+# Author: Kimberly Carlson
+
+# load required packages
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(tidyverse,
                FAOSTAT)
 
-#fbs_new_bulk<-get_faostat_bulk(code = "FBS", data_folder = "input/faostat")
-#fbs_old_bulk<-get_faostat_bulk(code = "FBSH", data_folder = "input/faostat")
-#prod_bulk<-get_faostat_bulk(code = "QCL", data_folder = "input/faostat")
+# pull data from FAOStat and save to disk
+#fbs_new_bulk <- get_faostat_bulk(code = "FBS", data_folder = "output")
+#fbs_old_bulk <- get_faostat_bulk(code = "FBSH", data_folder = "output")
+#prod_bulk <- get_faostat_bulk(code = "QCL", data_folder = "output")
 
-#saveRDS(fbs_new_bulk, "input/faostat/fbs_all_data.rds")
-#saveRDS(fbs_old_bulk, "input/faostat/fbsh_all_data.rds")
-#saveRDS(prod_bulk, "input/faostat/qcl_all_data.rds")
+#saveRDS(fbs_new_bulk, "output/fbs_all_data.rds")
+#saveRDS(fbs_old_bulk, "output/fbsh_all_data.rds")
+#saveRDS(prod_bulk, "output/qcl_all_data.rds")
 
-fbs_new_bulk <- readRDS("input/faostat/fbs_all_data.rds")
-fbs_old_bulk <- readRDS("input/faostat/fbsh_all_data.rds")
-prod_bulk <- readRDS("input/faostat/qcl_all_data.rds")
+# if data have already been saved to disk, read them in
+fbs_new_bulk <- readRDS("output/faostat/fbs_all_data.rds")
+fbs_old_bulk <- readRDS("output/faostat/fbsh_all_data.rds")
+prod_bulk <- readRDS("output/faostat/qcl_all_data.rds")
 
+# get production data from 2000 onward at a global level for oil crops
 production <- prod_bulk %>%
   filter(area == "World") %>%
   filter(element == "production") %>%
@@ -30,6 +37,7 @@ production <- prod_bulk %>%
            item == "Olive oil" |
            item == "Oil of maize")
 
+# get (new) food balance sheet data for regions of interest and world, for oil crops
 fbs_new <- fbs_new_bulk %>%
   filter(area == "Australia" | 
            area == "United Kingdom of Great Britain and Northern Ireland" |
@@ -48,6 +56,8 @@ fbs_new <- fbs_new_bulk %>%
            item == "Maize Germ Oil" |
            item == "Oilcrops Oil, Other")
 
+# get (old) food balance sheet data for regions of interest and world, for oil crops,
+# from 2000 to 2009
 fbs_old <- fbs_old_bulk %>%
   filter(area == "Australia" | 
            area == "United Kingdom of Great Britain and Northern Ireland" |
@@ -68,17 +78,20 @@ fbs_old <- fbs_old_bulk %>%
   filter(year < 2010) %>%
   filter(year > 1999)
 
+# get palm oil + palm kernel oil production globally by year
 prod_palm <- production %>%
   filter(item == "Palm oil" | item == "Oil of palm kernel") %>%
   group_by(year) %>%
   summarise(palmoils = sum(value))
-  
+
+# get other oil crop production globally by year
 prod_other <- production %>%
   filter(item != "Palm oil") %>%
   filter(item != "Oil of palm kernel") %>%
   group_by(year) %>%
   summarise(otheroils = sum(value))
 
+# join tables to get total production of palm and other oils by year globally
 prod_all <- prod_other %>%
   left_join(prod_palm) %>%
   mutate(percentpalm = palmoils/(palmoils+otheroils)*100,
@@ -86,6 +99,7 @@ prod_all <- prod_other %>%
   pivot_longer(cols = otheroils:percentother,
                values_to = "value")
 
+# summarise domestic supply by year, for named oil crops, other oil crops, and palm
 fbs_oils_new <- fbs_new %>%
   filter(item != "Palm Oil") %>%
   filter(item != "Palmkernel Oil") %>%
@@ -126,12 +140,14 @@ fbs_palm_old <- fbs_old %>%
   summarise(Palm = sum(value))%>%
   mutate(dataset = "old")
 
+# combine these aggregated data
 fbs_palm_update = bind_rows(fbs_palm_old,fbs_palm_new)
 
 fbs_named_update = bind_rows(fbs_oils_old,fbs_oils_new)
 
 fbs_other_update = bind_rows(fbs_other_old,fbs_other_new)
 
+# calculate the contribution of each group to domestic supply, by year and location
 fbs_all <- fbs_named_update %>%
   left_join(fbs_palm_update) %>%
   left_join(fbs_other_update) %>%
@@ -143,7 +159,8 @@ fbs_all <- fbs_named_update %>%
                values_to = "value") %>%
   mutate(area = replace(area, area == "Netherlands (Kingdom of the)", "Netherlands")) %>%
   mutate(area = replace(area, area == "United Kingdom of Great Britain and Northern Ireland", "UK")) 
-  
+
+# visualize data
 fbs_all %>%
   filter(name != "palmpercent") %>%
   filter(name != "uncategorizedpercent") %>%
@@ -213,5 +230,3 @@ prod_all %>%
   geom_vline(xintercept = 2006,linetype="dashed")
 
 ggsave(paste("output/prod_line.tif"),width = 6, height = 4)
-
-

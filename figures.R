@@ -1,7 +1,11 @@
-# LOAD REQUIRED PACKAGES
+# This script visualizes the corrected bootstrap data
+# Author: Kimberly Carlson
+
+# load required packages
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(tidyverse)
 
+# set whether oleochemcials are included in the analysis (oleo = 1), or not (oleo = 0)
 oleo = 1
 
 if (oleo == 0) {
@@ -11,7 +15,7 @@ if (oleo == 0) {
 
 results_corrected_long<-read.csv(paste("output/supermarketStudyBootstrap_corrected_", append, ".csv",sep = ""))
 
-# plot CIs
+# plot means and confidence intervals
 
 # aggregated across all supermarkets and supercategories
 results_corrected_long %>%
@@ -37,7 +41,6 @@ results_corrected_long %>%
   filter(supermarket != "all") %>%
   filter(unspecified == "measured") %>%
   ggplot(aes(x = reorder(oil,-mean), y = mean*100)) +
-  #geom_hline(yintercept=50)+
   geom_point() +
   coord_flip() +
   facet_grid(. ~ supermarket) +
@@ -56,7 +59,6 @@ results_corrected_long %>%
   filter(supermarket != "all") %>%
   filter(unspecified == "measured") %>%
   ggplot(aes(x = reorder(oil,-mean), y = mean*100)) +
-  #geom_hline(yintercept=50)+
   geom_point() +
   coord_flip() +
   facet_grid(supermarket ~ supercategory) +
@@ -75,7 +77,6 @@ results_corrected_long %>%
   filter(supermarket == "all") %>%
   filter(unspecified == "measured") %>%
   ggplot(aes(x = reorder(oil,-mean), y = mean*100)) +
-  #geom_hline(yintercept=50)+
   geom_point() +
   coord_flip() +
   facet_grid(. ~ supercategory) +
@@ -94,7 +95,6 @@ results_corrected_long %>%
   filter(supermarket == "all") %>%
   filter(unspecified == "add_unspecified") %>%
   ggplot(aes(x = reorder(oil,-mean), y = mean*100)) +
-  #geom_hline(yintercept=50)+
   geom_point() +
   coord_flip() +
   geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),    
@@ -112,7 +112,6 @@ results_corrected_long %>%
   filter(supermarket != "all")  %>%
   filter(unspecified == "add_unspecified") %>%
   ggplot(aes(x = reorder(oil,-mean), y = mean*100)) +
-  #geom_hline(yintercept=50)+
   geom_point() +
   coord_flip() +
   facet_grid(. ~ supermarket) +
@@ -121,7 +120,6 @@ results_corrected_long %>%
   ylab("% of products with oil crop")+
   theme_bw()+
   theme(axis.title.y = element_blank())+
-  #ggtitle("corrected for unsampled categories, by supermarket")+
   scale_x_discrete(limits=rev)
 
 ggsave(paste("output/corrected_supermarket_unspecified_", append, ".tif",sep = ""),width = 5, height = 4)
@@ -132,7 +130,6 @@ results_corrected_long %>%
   filter(supermarket != "all") %>%
   filter(unspecified == "add_unspecified") %>%
   ggplot(aes(x = reorder(oil,-mean), y = mean*100)) +
-  #geom_hline(yintercept=50)+
   geom_point() +
   coord_flip() +
   facet_grid(supermarket ~ supercategory) +
@@ -151,7 +148,6 @@ results_corrected_long %>%
   filter(supermarket == "all")  %>%
   filter(unspecified == "add_unspecified") %>%
   ggplot(aes(x = reorder(oil,-mean), y = mean*100)) +
-  #geom_hline(yintercept=50)+
   geom_point() +
   coord_flip() +
   facet_grid(. ~ supercategory) +
