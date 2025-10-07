@@ -13,7 +13,7 @@ Supermarket Study (11_02_25 - duplicates restored).xlsx
 All the input data are in the "input" folder. All files written by the code are saved to the "output" folder.
 
 # Code
-Open the smallholder-inclusion-rspo-indo.Rproj file to ensure a reproducible environment.  
+Open the supermarketStudy.Rproj file to ensure a reproducible environment.  
 
 fao analysis.R - downloads and analyzes data from FAOStat  
 Please run the following .R files in the order specified by the numeric file names since 2 is dependent on 1:  
