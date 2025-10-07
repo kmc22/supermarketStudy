@@ -21,11 +21,12 @@ fbs_new_bulk <- readRDS("output/faostat/fbs_all_data.rds")
 fbs_old_bulk <- readRDS("output/faostat/fbsh_all_data.rds")
 prod_bulk <- readRDS("output/faostat/qcl_all_data.rds")
 
-# get production data from 2000 onward at a global level for oil crops
+# get production data from 2000-2022 at a global level for oil crops
 production <- prod_bulk %>%
   filter(area == "World") %>%
   filter(element == "production") %>%
-  filter(year > 1999) %>%
+  filter(year >= 2000) %>%
+  filter(year <= 2022) %>%
   filter(item == "Soya bean oil" |
            item == "Groundnut oil" |
            item == "Sunflower-seed oil, crude" |
@@ -37,8 +38,10 @@ production <- prod_bulk %>%
            item == "Olive oil" |
            item == "Oil of maize")
 
-# get (new) food balance sheet data for regions of interest and world, for oil crops
+# get (new) food balance sheet data for regions of interest and world, for oil crops,
+# through 2022
 fbs_new <- fbs_new_bulk %>%
+  filter(year <= 2022) %>%
   filter(area == "Australia" | 
            area == "United Kingdom of Great Britain and Northern Ireland" |
            area == "Netherlands (Kingdom of the)" |
