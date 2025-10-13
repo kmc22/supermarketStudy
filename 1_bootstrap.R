@@ -12,7 +12,7 @@ pacman::p_load(tidyverse,
                srvyr)
 
 # set whether oleochemcials are included in the analysis (oleo = 1), or not (oleo = 0)
-oleo = 1
+oleo = 0
 
 if (oleo == 0) {
   append = "nooleo"
@@ -21,7 +21,7 @@ if (oleo == 0) {
 
 
 # load supermarket category total data
-category_totals <- read_excel("input/Inclusion_Exclusion  (10_01_25) input.xlsx")
+category_totals <- read_excel("input/categoryTotals.xlsx")
 
 category_totals <- category_totals %>%
   dplyr::rename("supermarket" = "Supermarket",
@@ -34,13 +34,13 @@ category_totals <- category_totals %>%
   select(-products_sampled)
 
 # load individual product data
-ah <- read_excel("input/Supermarket Study (11_02_25 - duplicates restored).xlsx", sheet = "Albert Heijn") %>%
+ah <- read_excel("input/productsSampled.xlsx", sheet = "Albert Heijn") %>%
   mutate(supermarket = "Albert Heijn") %>%
   filter(!is.na(`Product Name`))
-sb <- read_excel("input/Supermarket Study (11_02_25 - duplicates restored).xlsx", sheet = "Sainsburys") %>%
+sb <- read_excel("input/productsSampled.xlsx", sheet = "Sainsburys") %>%
   mutate(supermarket = "Sainsburys") %>%
   filter(!is.na(`Product Name`))
-ww <- read_excel("input/Supermarket Study (11_02_25 - duplicates restored).xlsx", sheet = "Woolworths") %>%
+ww <- read_excel("input/productsSampled.xlsx", sheet = "Woolworths") %>%
   mutate(supermarket = "Woolworths") %>%
   filter(!is.na(`Product Name`))
 
@@ -99,7 +99,7 @@ summary_table <- category_totals %>%
             products_categories_all = sum(categories_all)) %>%
   ungroup()
 
-write.csv(summary_table,"output/summary_table.csv")
+#write.csv(summary_table,"output/summary_table.csv")
 
 # create table for later use at the supermarket/supercategory level
 oil_totals <- category_totals %>%
@@ -339,5 +339,5 @@ results_corrected_long <- bind_rows(myresult_corrected_long,
                                     myresult_sc_corrected_long)
 
 # save results
-write.csv(results_long,paste("output/supermarketStudyBootstrap_uncorrected_", append, ".csv",sep = ""),row.names = FALSE)
-write.csv(results_corrected_long,paste("output/supermarketStudyBootstrap_corrected_", append, ".csv",sep = ""),row.names = FALSE)
+#write.csv(results_long,paste("output/supermarketStudyBootstrap_uncorrected_", append, ".csv",sep = ""),row.names = FALSE)
+#write.csv(results_corrected_long,paste("output/supermarketStudyBootstrap_corrected_", append, ".csv",sep = ""),row.names = FALSE)
