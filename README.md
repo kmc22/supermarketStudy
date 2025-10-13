@@ -6,7 +6,7 @@ Meijaard Emily M, Kimberly M Carlson, Douglas Sheil, Syahmi Zaini, Erik Meijaard
 The R code is covered under the MIT License.
 
 The following data in the "input" folder were generated for this project and are covered by a CC0 (Creative Commons Zero) license:  
-categoryTotals.xlsx
+categoryTotals.xlsx  
 productsSampled.xlsx
 
 # Data
